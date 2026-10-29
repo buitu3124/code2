@@ -1,0 +1,51 @@
+name: taiwan_bus_tracker
+description: Real-time bus tracking in Taiwan powered by the PTX API.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP client for PTX API calls
+  http: ^1.2.0
+
+  # State management (React Query equivalent)
+  flutter_riverpod: ^2.5.1
+
+  # Map (Google Maps)
+  google_maps_flutter: ^2.6.0
+
+  # GPS location
+  geolocator: ^13.0.1
+
+  # Persist favourites
+  shared_preferences: ^2.3.2
+
+  # Camera scan feature
+  image_picker: ^1.1.2
+  # In-app capture — the external camera app let Android kill us mid-photo
+  camera: ^0.12.0+2
+  google_mlkit_text_recognition: ^0.13.0
+
+  # Voice User Interface (VUI) — mic input + spoken responses
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.0
+  webview_flutter: ^4.14.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Route list for offline search (see PtxApi.searchRoutes)
+  assets:
+    - assets/routes_Taichung.json
+    # 3D signing avatar (WebView page + VRM model), see tool/avatar/README.md
+    - assets/avatar/

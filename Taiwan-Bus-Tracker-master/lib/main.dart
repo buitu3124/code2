@@ -1,0 +1,149 @@
+﻿// Taiwan Bus Tracker — Flutter entry point
+// Mirrors App.tsx + AppNavigator.tsx from the React Native version
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'providers/bus_providers.dart';
+import 'screens/map_screen.dart';
+import 'screens/search_screen.dart';
+import 'screens/route_detail_screen.dart';
+import 'screens/stop_detail_screen.dart';
+import 'screens/favourites_screen.dart';
+import 'screens/scan_screen.dart';
+import 'screens/ai_chat_screen.dart';
+import 'screens/sign_assistant_screen.dart';
+import 'utils/app_strings.dart';
+import 'utils/crash_recovery.dart';
+import 'utils/theme.dart';
+import 'design/tokens.dart';
+
+void main() {
+  // CrashRecovery replaces the red error screen with an automatic restart.
+  CrashRecovery.run(
+    // ProviderScope is the Riverpod equivalent of QueryClientProvider
+    const ProviderScope(
+      child: TaiwanBusApp(),
+    ),
+  );
+}
+
+class TaiwanBusApp extends StatelessWidget {
+  const TaiwanBusApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Taiwan Bus Tracker',
+      debugShowCheckedModeBanner: false,
+      theme: buildAppTheme(),
+      // Named routes — mirrors React Navigation stack + tab navigator
+      initialRoute: '/',
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/':
+            return MaterialPageRoute(
+              builder: (_) => const _MainTabs(),
+            );
+          case '/search':
+            return MaterialPageRoute(
+              builder: (_) => const SearchScreen(),
+            );
+          case '/route_detail':
+            final args = settings.arguments as Map<String, String>;
+            return MaterialPageRoute(
+              builder: (_) => RouteDetailScreen(
+                routeName: args['routeName']!,
+                routeUID: args['routeUID']!,
+              ),
+            );
+          case '/stop_detail':
+            final args = settings.arguments as Map<String, String>;
+            return MaterialPageRoute(
+              builder: (_) => StopDetailScreen(
+                stopUID: args['stopUID']!,
+                stopName: args['stopName']!,
+              ),
+            );
+          case '/scan':
+            return MaterialPageRoute(
+              builder: (_) => const ScanScreen(),
+            );
+          case '/assistant_chat':
+            final args = settings.arguments as Map<String, String>?;
+            return MaterialPageRoute(
+              builder: (_) => AiChatScreen(
+                initialQuestion: args?['question'],
+                initialAnswer: args?['answer'],
+              ),
+            );
+          case '/assistant_sign':
+            return MaterialPageRoute(
+              builder: (_) => const SignAssistantScreen(),
+            );
+          default:
+            return MaterialPageRoute(
+              builder: (_) => const _MainTabs(),
+            );
+        }
+      },
+    );
+  }
+}
+
+// ─── Bottom tab navigator ─────────────────────────────────────────────────────
+
+class _MainTabs extends ConsumerStatefulWidget {
+  const _MainTabs();
+
+  @override
+  ConsumerState<_MainTabs> createState() => _MainTabsState();
+}
+
+class _MainTabsState extends ConsumerState<_MainTabs> {
+  // Reopen the same tab after a crash restart
+  int _index = (CrashRecovery.takeRestored('mainTab') as int?) ?? 0;
+
+  static const _screens = [
+    MapScreen(),
+    FavouritesScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: IndexedStack(
+        index: _index,
+        children: _screens,
+      ),
+      // Colours come from the theme's NavigationBarThemeData; a hairline
+      // separates it from the map sheet, which shares the same surface.
+      bottomNavigationBar: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: AppPalette.divider)),
+        ),
+        child: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: (i) {
+            CrashRecovery.session['mainTab'] = i;
+            setState(() => _index = i);
+          },
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.map_outlined),
+              selectedIcon: const Icon(Icons.map),
+              label: AppStrings.t(lang, 'mapTab'),
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.star_outline_rounded),
+              selectedIcon: const Icon(Icons.star_rounded),
+              label: AppStrings.t(lang, 'savedTab'),
+            ),
+          ],
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        ),
+      ),
+    );
+  }
+}
